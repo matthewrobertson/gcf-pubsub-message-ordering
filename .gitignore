@@ -1,0 +1,7 @@
+.DS_Store
+generated/*
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.hcl
+*.pyc
