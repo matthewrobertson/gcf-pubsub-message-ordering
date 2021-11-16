@@ -2,7 +2,7 @@
 
 This sample demonstrates deploying a Python Google Cloud Function that is triggered by a manually configured Pub/Sub topic. The sample can be deployed using terraform:
 
-NOTE: You should replace the `PROJECT_ID` in [./terraform/main.tf] with your own GCP project ID
+NOTE: You should replace the `PROJECT_ID` in [./terraform/main.tf](./terraform/main.tf) with your own GCP project ID
 
 ```bash
 cd ./terraform/
