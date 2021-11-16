@@ -20,7 +20,7 @@ gcloud pubsub topics publish projects/PROJECT_ID/topics/message-ordering-topic \
   --ordering-key=5
 ```
 
-View the function logs so observe the invocation:
+View the function logs to observe the invocation:
 
 ```bash
 gcloud functions logs read pubsub-message-ordering-cloud-function --region="us-central1" --project=PROJECT_ID
@@ -36,7 +36,6 @@ def on_message(cloud_event):
 ```
 
 This enables automatic request marshaling to convert the incoming HTTP request into a [CloudEvent](https://cloudevents.io/).
-
 
 The function is then deployed using an HTTP trigger and its `trigger_url` is used to manually configure the Pub/Sub subscription:
 
