@@ -1,8 +1,19 @@
-# Cloud Functions + Pub/Sub Message Ordering + Terraform
+# Functions Framework + Cloud Run + Pub/Sub Message Ordering + Terraform
 
-This sample demonstrates deploying a Python Google Cloud Function that is triggered by a manually configured Pub/Sub topic. The sample can be deployed using terraform:
+This sample demonstrates deploying a Python Google Cloud Function to CloudRun, then configuring a Pub/Sub subscription to invoke it. 
 
-NOTE: You should replace the `PROJECT_ID` in [./terraform/main.tf](./terraform/main.tf#L3) with your own GCP project ID
+First create a container from the Python source code:
+
+NOTE: You should replace `PROJECT_ID` with your own source code
+
+```
+cd ./src/
+gcloud builds submit --pack image=gcr.io/PROJECT_ID/cr-background-function
+```
+
+Then deploy the image to CloudRun:
+
+NOTE: You should replace the `PROJECT_ID` in [./terraform/main.tf](./terraform/main.tf) with your own GCP project ID and the `image` with the gcr URL you created in the previous step.
 
 ```bash
 cd ./terraform/
@@ -10,6 +21,8 @@ terraform init
 terraform plan
 terraform apply
 ```
+
+
 
 Then send a message to the Pub/Sub topic to trigger the function:
 
@@ -20,28 +33,28 @@ gcloud pubsub topics publish projects/PROJECT_ID/topics/message-ordering-topic \
   --ordering-key=5
 ```
 
-View the function logs to observe the invocation:
-
-```bash
-gcloud functions logs read pubsub-message-ordering-cloud-function --region="us-central1" --project=PROJECT_ID
-```
-
 ## Explanation
 
-This sample uses the new [declarative functions signatures API](https://github.com/GoogleCloudPlatform/functions-framework-python#quickstart-register-your-function-using-decorator) to configure the signature type of the cloud function using a Python decorator:
+The sample builds a container using the same GCP buildpacks that power Google Cloud Functions. The necessary configuration is passed via build environment variables set in [./src/project.toml](./src/project.toml).
 
-```python
-@functions_framework.cloud_event
-def on_message(cloud_event):
+```
+[[build.env]]
+name = "GOOGLE_FUNCTION_TARGET"
+value = "hello"
+
+[[build.env]]
+name = "GOOGLE_FUNCTION_SIGNATURE_TYPE"
+value = "event"
 ```
 
-This enables automatic request marshaling to convert the incoming HTTP request into a [CloudEvent](https://cloudevents.io/).
+Setting `GOOGLE_FUNCTION_SIGNATURE_TYPE=event` enables automatic request marshaling to convert the incoming HTTP request into the [GCF background function arguments](https://cloud.google.com/functions/docs/writing/background#functions-writing-background-hello-pubsub-python)
 
-The function is then deployed using an HTTP trigger and its `trigger_url` is used to manually configure the Pub/Sub subscription:
+
+The function is then deployed to CloudRun and the service URL is used as the Pub/Sub subscription push endpoint:
 
 ```
 push_config {
-    push_endpoint = google_cloudfunctions_function.function.https_trigger_url
+    push_endpoint = google_cloud_run_service.default.status[0].url
 }
 ```
 
